@@ -315,6 +315,45 @@ select, .ff-input{
 
 .helptext{font-family:var(--font-mono);font-size:11px;color:var(--chalk-dim);line-height:1.6;}
 audio{display:none;}
+
+/* playlist */
+.player-bar{
+  background:linear-gradient(160deg, var(--panel), var(--panel2));border:1px solid var(--line);border-radius:16px;
+  padding:18px 20px;margin-bottom:20px;
+}
+.player-now{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
+.player-now .disc{
+  width:52px;height:52px;border-radius:50%;background:conic-gradient(var(--gold),var(--rust),var(--gold));
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.player-now .disc::after{content:"";width:16px;height:16px;border-radius:50%;background:var(--ink);}
+.player-now .disc.spin{animation:spin 3s linear infinite;}
+@keyframes spin{from{transform:rotate(0);}to{transform:rotate(360deg);}}
+.player-now .meta{flex:1;min-width:0;}
+.player-now .meta .t{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.player-now .meta .a{font-family:var(--font-mono);font-size:10.5px;color:var(--chalk-dim);}
+.player-progress{width:100%;height:5px;border-radius:4px;background:var(--line);overflow:hidden;margin-bottom:14px;cursor:pointer;}
+.player-progress .fill{height:100%;width:0%;background:linear-gradient(90deg,var(--ember),var(--gold));}
+.player-controls{display:flex;align-items:center;justify-content:center;gap:14px;}
+.pctrl-btn{
+  background:var(--panel2);border:1px solid var(--line);color:var(--chalk);border-radius:50%;
+  width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:16px;
+}
+.pctrl-btn.play{width:54px;height:54px;background:linear-gradient(135deg,var(--ember),var(--gold));color:var(--ink);border:none;font-size:18px;}
+.pctrl-btn:hover{border-color:var(--amber);}
+.player-time{font-family:var(--font-mono);font-size:10px;color:var(--chalk-dim);text-align:center;margin-top:8px;}
+
+.queue-row{
+  display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);margin-bottom:8px;background:var(--panel);
+}
+.queue-row.playing{border-color:var(--gold);background:rgba(244,196,48,.07);}
+.queue-num{font-family:var(--font-mono);font-size:12px;color:var(--chalk-dim);width:20px;flex-shrink:0;}
+.queue-meta{flex:1;min-width:0;}
+.queue-meta b{font-size:13px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.queue-meta span{font-family:var(--font-mono);font-size:10px;color:var(--chalk-dim);}
+.queue-actions{display:flex;gap:6px;flex-shrink:0;}
+.icon-btn{background:none;border:1px solid var(--line);color:var(--chalk-dim);border-radius:7px;width:28px;height:28px;font-size:12px;display:flex;align-items:center;justify-content:center;}
+.icon-btn:hover{border-color:var(--amber);color:var(--amber);}
 </style>
 </head>
 <body>
@@ -329,11 +368,11 @@ audio{display:none;}
     <div class="role-options">
       <button class="role-option" onclick="selectRoleHost()">
         <span class="ic">🎙️</span>
-        <span><span class="label">Host / Admin</span><span class="desc">Master</span></span>
+        <span><span class="label">Host / Admin</span><span class="desc">Run the bracket, call artists, manage everything</span></span>
       </button>
       <button class="role-option" onclick="showArtistPicker()">
         <span class="ic">🎤</span>
-        <span><span class="label">TEAM</span><span class="desc">Check in on your walkie channel</span></span>
+        <span><span class="label">I'm an Artist</span><span class="desc">Check in on your walkie channel</span></span>
       </button>
     </div>
     <div class="artist-picker" id="artistPicker">
@@ -342,7 +381,7 @@ audio{display:none;}
         <select id="artistSelect"><option value="">— choose artist —</option></select>
       </div>
       <button class="btn btn-primary btn-block" onclick="confirmArtistRole()">Enter as Artist</button>
-      <p class="helptext" style="margin-top:8px;">Artist not on the list yet? Use master control to add in the Admin tab first.</p>
+      <p class="helptext" style="margin-top:8px;">Not on the list yet? Ask the host to add you in the Admin tab first.</p>
     </div>
   </div>
 </div>
@@ -367,6 +406,7 @@ audio{display:none;}
     <button class="tab-btn active" data-tab="bracket">Bracket</button>
     <button class="tab-btn" data-tab="walkie">Walkie</button>
     <button class="tab-btn admin-only" data-tab="admin" style="display:none;">Admin</button>
+    <button class="tab-btn" data-tab="playlist">Playlist</button>
     <button class="tab-btn" data-tab="drops">Music &amp; Drops</button>
     <button class="tab-btn" data-tab="promo">Promo Kit</button>
     <button class="tab-btn" data-tab="hero">Hero Reel</button>
@@ -407,9 +447,9 @@ audio{display:none;}
   <div class="view" id="view-walkie">
     <div id="walkie-host-panel" style="display:none;">
       <div class="section-title">Channel Control</div>
-      <p class="section-sub">Call a team member to open a live audio line + vibrating alert</p>
+      <p class="section-sub">Call an artist to open a live audio line + vibrating alert</p>
       <div style="margin-bottom:16px;">
-        <button class="btn btn-ghost btn-sm" onclick="buzzAll()">📳 Buzz TEAM </button>
+        <button class="btn btn-ghost btn-sm" onclick="buzzAll()">📳 Buzz All Artists</button>
       </div>
       <div class="wt-grid" id="hostWtList"></div>
       <audio id="hostRemoteAudio" autoplay playsinline></audio>
@@ -474,6 +514,69 @@ audio{display:none;}
         <button class="btn btn-danger btn-sm" onclick="resetDivision('male')">Reset Male Bracket</button>
         <button class="btn btn-danger btn-sm" onclick="resetDivision('female')">Reset Female Bracket</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ---- PLAYLIST ---- -->
+  <div class="view" id="view-playlist">
+    <div class="section-title">Battle Playlist</div>
+    <p class="section-sub" id="playlistSubtitle">DJ-style — everyone hears the same track at the same time</p>
+
+    <!-- HOST: full transport controls, drives the broadcast -->
+    <div id="djHostBar" style="display:none;">
+      <div class="player-bar">
+        <div class="player-now">
+          <div class="disc" id="playerDisc"></div>
+          <div class="meta">
+            <div class="t" id="playerNowTitle">Nothing queued yet</div>
+            <div class="a" id="playerNowArtist">Add tracks below to build the set</div>
+          </div>
+          <span class="status-tag" id="broadcastTag">OFF AIR</span>
+        </div>
+        <div class="player-progress" id="playerProgressBar" onclick="djSeek(event)"><div class="fill" id="playerProgressFill"></div></div>
+        <div class="player-controls">
+          <button class="pctrl-btn" onclick="djPrev()">⏮</button>
+          <button class="pctrl-btn play" id="playPauseBtn" onclick="djTogglePlayPause()">▶</button>
+          <button class="pctrl-btn" onclick="djNext()">⏭</button>
+        </div>
+        <div class="player-time" id="playerTime">0:00 / 0:00 · Track — of —</div>
+      </div>
+      <p class="helptext" style="margin:-8px 0 16px;">You're the DJ — play/pause/skip here pushes to every artist's device live.</p>
+    </div>
+
+    <!-- ARTIST: read-only synced listener view -->
+    <div id="djArtistBar" style="display:none;">
+      <div class="player-bar">
+        <div class="player-now">
+          <div class="disc" id="playerDiscArtist"></div>
+          <div class="meta">
+            <div class="t" id="playerNowTitleArtist">Waiting for the host to start the set</div>
+            <div class="a" id="playerNowArtistArtist">Tap Join Broadcast to sync in</div>
+          </div>
+          <span class="status-tag" id="broadcastTagArtist">OFF AIR</span>
+        </div>
+        <div class="player-progress"><div class="fill" id="playerProgressFillArtist"></div></div>
+        <div class="player-time" id="playerTimeArtist">0:00 / 0:00</div>
+      </div>
+      <button class="btn btn-primary btn-block" id="joinBroadcastBtn" onclick="joinBroadcast()">🔊 Join Broadcast</button>
+      <p class="helptext" style="margin:8px 0 16px;">Once joined, your audio auto-syncs to the host — no controls needed, just listen.</p>
+    </div>
+    <audio id="playlistAudio"></audio>
+
+    <div class="card">
+      <h3>Add Track</h3>
+      <div class="grid2">
+        <div class="field"><label>Song Title</label><input class="ff-input" id="plTitle" placeholder="e.g. Round 1 Battle Cut"></div>
+        <div class="field"><label>Artist Name</label><input class="ff-input" id="plArtist" placeholder="Artist name"></div>
+      </div>
+      <div class="field"><label>MP3 URL (direct link)</label><input class="ff-input" id="plUrl" placeholder="https://.../track.mp3"></div>
+      <button class="btn btn-primary" onclick="addPlaylistTrack()">+ Add to Playlist</button>
+      <p class="helptext" style="margin-top:10px;">Needs a direct .mp3 link (a Google Drive "share" link usually won't play directly — use a direct file host).</p>
+    </div>
+
+    <div class="card">
+      <h3>Play Order (<span id="playlistCount">0</span>)</h3>
+      <div id="playlistQueue"><div class="helptext">No tracks queued yet.</div></div>
     </div>
   </div>
 
@@ -557,6 +660,9 @@ let PROMO = [];
 let HERO = [];
 let DROPS = [];
 let HOST_REQUESTS = [];
+let PLAYLIST = [];
+let plCurrentIdx = -1;
+let plIsPlaying = false;
 let selectedMatchup = { male: [], female: [] };
 let activeCallArtistId = null; // host side: who we're talking to
 let pc = null; // RTCPeerConnection
@@ -575,7 +681,10 @@ async function boot(){
   if(!(await sget('hero-videos'))) await sset('hero-videos', HERO);
   DROPS = (await sget('drops')) || [];
   HOST_REQUESTS = (await sget('host-requests')) || [];
+  PLAYLIST = (await sget('playlist')) || [];
   populateArtistSelect();
+  renderPlaylistQueue();
+  setupPlaylistAudioEvents();
 }
 function defaultPromo(){
   return [
@@ -591,7 +700,7 @@ function defaultHero(){
   return [
     {src:'', label:'Opening Hype Reel'},
     {src:'', label:'Artist Introductions'},
-    {src:'', label:'Last Year\\'s Crowning Moment'},
+    {src:'', label:"Last Year's Crowning Moment"},
     {src:'', label:'Venue / Doors Info'}
   ];
 }
@@ -620,6 +729,11 @@ async function confirmArtistRole(){
 function logout(){
   ROLE = null;
   teardownCall();
+  const audio = document.getElementById('playlistAudio');
+  if(audio){ audio.pause(); audio.removeAttribute('src'); audio.load(); }
+  plIsPlaying = false; plCurrentIdx = -1; djJoined = false;
+  stopHeartbeat();
+  if(djSyncTimer){ clearInterval(djSyncTimer); djSyncTimer=null; }
   document.getElementById('appShell').style.display='none';
   document.getElementById('loginView').style.display='flex';
   document.getElementById('artistPicker').classList.remove('show');
@@ -632,12 +746,17 @@ function enterApp(){
   document.querySelectorAll('.admin-only').forEach(el=> el.style.display = ROLE.type==='host' ? '' : 'none');
   document.getElementById('walkie-host-panel').style.display = ROLE.type==='host' ? '' : 'none';
   document.getElementById('walkie-artist-panel').style.display = ROLE.type==='artist' ? '' : 'none';
+  document.getElementById('djHostBar').style.display = ROLE.type==='host' ? '' : 'none';
+  document.getElementById('djArtistBar').style.display = ROLE.type==='artist' ? '' : 'none';
+  document.getElementById('playlistSubtitle').textContent = ROLE.type==='host'
+    ? 'DJ-style — your play/pause/skip controls what every artist hears'
+    : 'DJ-style — join the broadcast to hear what the host is playing, live';
   if(ROLE.type==='artist'){
     document.getElementById('artistChannelLabel').textContent = 'Channel: ' + ROLE.name.toUpperCase();
   }
   refreshAll();
   startPolling();
-  if(ROLE.type==='artist') startArtistListener();
+  if(ROLE.type==='artist') { startArtistListener(); startDjSyncLoop(); }
   bindPtt();
 }
 
@@ -662,6 +781,13 @@ async function refreshAll(){
   HERO = (await sget('hero-videos')) || [];
   DROPS = (await sget('drops')) || [];
   HOST_REQUESTS = (await sget('host-requests')) || [];
+  const freshPlaylist = (await sget('playlist')) || [];
+  if(JSON.stringify(freshPlaylist) !== JSON.stringify(PLAYLIST)){
+    const currentTrackId = plCurrentIdx>-1 && PLAYLIST[plCurrentIdx] ? PLAYLIST[plCurrentIdx].id : null;
+    PLAYLIST = freshPlaylist;
+    plCurrentIdx = currentTrackId ? PLAYLIST.findIndex(t=>t.id===currentTrackId) : -1;
+    renderPlaylistQueue();
+  }
   renderBracket();
   if(ROLE && ROLE.type==='host'){ renderHostWalkie(); renderAdmin(); }
   renderDrops();
@@ -1054,6 +1180,247 @@ async function artistSignalHost(){
 function teardownCall(){
   if(pc){ try{ pc.close(); }catch(e){} pc=null; }
   if(localStream){ localStream.getTracks().forEach(t=>t.stop()); localStream=null; }
+}
+
+/* ===================== PLAYLIST — DJ SYNC ===================== */
+// dj_state (shared) = { trackId, isPlaying, position, anchorTs }
+// position = seconds into the track AT anchorTs. Listeners compute
+// expected = position + (Date.now()-anchorTs)/1000 when isPlaying.
+let djJoined = false;
+let djSyncTimer = null;
+let djHeartbeatTimer = null;
+
+function setupPlaylistAudioEvents(){
+  const audio = document.getElementById('playlistAudio');
+  audio.addEventListener('timeupdate', ()=>{
+    if(!audio.duration) return;
+    const pct = (audio.currentTime/audio.duration*100)+'%';
+    if(ROLE && ROLE.type==='host'){
+      document.getElementById('playerProgressFill').style.width = pct;
+      document.getElementById('playerTime').textContent =
+        fmtTime(audio.currentTime)+' / '+fmtTime(audio.duration)+' · Track '+(plCurrentIdx+1)+' of '+PLAYLIST.length;
+    } else {
+      document.getElementById('playerProgressFillArtist').style.width = pct;
+      document.getElementById('playerTimeArtist').textContent = fmtTime(audio.currentTime)+' / '+fmtTime(audio.duration);
+    }
+  });
+  audio.addEventListener('ended', ()=>{ if(ROLE && ROLE.type==='host') djNext(); });
+}
+function fmtTime(s){
+  if(!s || isNaN(s)) return '0:00';
+  const m = Math.floor(s/60), sec = Math.floor(s%60);
+  return m+':'+String(sec).padStart(2,'0');
+}
+async function addPlaylistTrack(){
+  const title = document.getElementById('plTitle').value.trim();
+  const artist = document.getElementById('plArtist').value.trim();
+  const url = document.getElementById('plUrl').value.trim();
+  if(!title || !url){ alert('Enter a song title and an MP3 URL.'); return; }
+  PLAYLIST = (await sget('playlist')) || [];
+  PLAYLIST.push({ id:'t_'+Math.random().toString(36).slice(2,9), title, artist, url });
+  await sset('playlist', PLAYLIST);
+  document.getElementById('plTitle').value='';
+  document.getElementById('plArtist').value='';
+  document.getElementById('plUrl').value='';
+  renderPlaylistQueue();
+}
+async function removePlaylistTrack(id){
+  PLAYLIST = (await sget('playlist')) || [];
+  const removingCurrent = plCurrentIdx>-1 && PLAYLIST[plCurrentIdx] && PLAYLIST[plCurrentIdx].id===id;
+  PLAYLIST = PLAYLIST.filter(t=>t.id!==id);
+  await sset('playlist', PLAYLIST);
+  if(removingCurrent && ROLE && ROLE.type==='host'){ await djStop(); }
+  renderPlaylistQueue();
+}
+async function moveTrack(id, dir){
+  PLAYLIST = (await sget('playlist')) || [];
+  const i = PLAYLIST.findIndex(t=>t.id===id);
+  const j = i+dir;
+  if(i<0 || j<0 || j>=PLAYLIST.length) return;
+  const wasCurrentId = plCurrentIdx>-1 && PLAYLIST[plCurrentIdx] ? PLAYLIST[plCurrentIdx].id : null;
+  [PLAYLIST[i], PLAYLIST[j]] = [PLAYLIST[j], PLAYLIST[i]];
+  await sset('playlist', PLAYLIST);
+  if(wasCurrentId) plCurrentIdx = PLAYLIST.findIndex(t=>t.id===wasCurrentId);
+  renderPlaylistQueue();
+}
+function renderPlaylistQueue(){
+  document.getElementById('playlistCount').textContent = PLAYLIST.length;
+  const el = document.getElementById('playlistQueue');
+  const isHost = ROLE && ROLE.type==='host';
+  if(!PLAYLIST.length){ el.innerHTML = '<div class="helptext">No tracks queued yet.</div>'; }
+  else{
+    el.innerHTML = PLAYLIST.map((t,i)=>`
+      <div class="queue-row ${i===plCurrentIdx?'playing':''}">
+        <div class="queue-num">${i===plCurrentIdx && plIsPlaying ? '▶' : (i+1)}</div>
+        <div class="queue-meta"><b>${escapeHtml(t.title)}</b><span>${escapeHtml(t.artist||'Unknown')}</span></div>
+        <div class="queue-actions">
+          <button class="icon-btn" onclick="moveTrack('${t.id}',-1)" title="Move up">↑</button>
+          <button class="icon-btn" onclick="moveTrack('${t.id}',1)" title="Move down">↓</button>
+          ${isHost ? `<button class="icon-btn" onclick="djPlayTrack('${t.id}')" title="Play live">▶</button>` : ''}
+          <button class="icon-btn" onclick="removePlaylistTrack('${t.id}')" title="Remove">✕</button>
+        </div>
+      </div>`).join('');
+  }
+  updateNowPlayingLabel();
+}
+function updateNowPlayingLabel(){
+  const isHost = ROLE && ROLE.type==='host';
+  const disc = document.getElementById(isHost ? 'playerDisc' : 'playerDiscArtist');
+  const titleEl = document.getElementById(isHost ? 'playerNowTitle' : 'playerNowTitleArtist');
+  const artistEl = document.getElementById(isHost ? 'playerNowArtist' : 'playerNowArtistArtist');
+  const tagEl = document.getElementById(isHost ? 'broadcastTag' : 'broadcastTagArtist');
+  if(plCurrentIdx>-1 && PLAYLIST[plCurrentIdx]){
+    titleEl.textContent = PLAYLIST[plCurrentIdx].title;
+    artistEl.textContent = PLAYLIST[plCurrentIdx].artist || 'Unknown artist';
+    disc.classList.toggle('spin', plIsPlaying);
+    if(tagEl){ tagEl.textContent = plIsPlaying ? '🔴 ON AIR' : 'PAUSED'; }
+  } else {
+    titleEl.textContent = isHost ? (PLAYLIST.length ? 'Ready to broadcast' : 'Nothing queued yet') : 'Waiting for the host to start the set';
+    artistEl.textContent = isHost ? 'Tap ▶ on a track below to go live' : (djJoined ? 'Synced — waiting for host' : 'Tap Join Broadcast to sync in');
+    disc.classList.remove('spin');
+    if(tagEl) tagEl.textContent = 'OFF AIR';
+  }
+  if(isHost) document.getElementById('playPauseBtn').textContent = plIsPlaying ? '⏸' : '▶';
+}
+
+/* ---- HOST: drives the shared dj_state ---- */
+async function pushDjState(overrides){
+  const audio = document.getElementById('playlistAudio');
+  const state = Object.assign({
+    trackId: plCurrentIdx>-1 && PLAYLIST[plCurrentIdx] ? PLAYLIST[plCurrentIdx].id : null,
+    isPlaying: plIsPlaying,
+    position: audio.currentTime || 0,
+    anchorTs: Date.now()
+  }, overrides || {});
+  await sset('dj_state', state);
+}
+function djPlayTrack(id){
+  const i = PLAYLIST.findIndex(t=>t.id===id);
+  if(i<0) return;
+  plCurrentIdx = i;
+  const audio = document.getElementById('playlistAudio');
+  audio.src = PLAYLIST[i].url;
+  audio.currentTime = 0;
+  audio.play().then(()=>{
+    plIsPlaying = true; renderPlaylistQueue();
+    pushDjState({trackId:id, isPlaying:true, position:0, anchorTs:Date.now()});
+    startHeartbeat();
+  }).catch(()=>{
+    plIsPlaying = false; renderPlaylistQueue();
+    alert('Could not play that link — make sure it is a direct .mp3 URL.');
+  });
+  renderPlaylistQueue();
+}
+function djTogglePlayPause(){
+  const audio = document.getElementById('playlistAudio');
+  if(plCurrentIdx===-1){ if(PLAYLIST.length) djPlayTrack(PLAYLIST[0].id); return; }
+  if(plIsPlaying){
+    audio.pause(); plIsPlaying=false;
+    pushDjState({isPlaying:false, position:audio.currentTime, anchorTs:Date.now()});
+    stopHeartbeat();
+  } else {
+    audio.play().then(()=>{
+      plIsPlaying=true; renderPlaylistQueue();
+      pushDjState({isPlaying:true, position:audio.currentTime, anchorTs:Date.now()});
+      startHeartbeat();
+    });
+  }
+  renderPlaylistQueue();
+}
+function djNext(){
+  if(!PLAYLIST.length) return;
+  const next = plCurrentIdx+1;
+  if(next < PLAYLIST.length) djPlayTrack(PLAYLIST[next].id);
+  else djStop();
+}
+function djPrev(){
+  if(!PLAYLIST.length) return;
+  const prev = plCurrentIdx-1;
+  if(prev>=0) djPlayTrack(PLAYLIST[prev].id);
+}
+async function djStop(){
+  const audio = document.getElementById('playlistAudio');
+  audio.pause(); audio.removeAttribute('src'); audio.load();
+  plIsPlaying = false; plCurrentIdx = -1;
+  stopHeartbeat();
+  await pushDjState({trackId:null, isPlaying:false, position:0, anchorTs:Date.now()});
+  renderPlaylistQueue();
+}
+function djSeek(e){
+  const audio = document.getElementById('playlistAudio');
+  if(!audio.duration) return;
+  const bar = document.getElementById('playerProgressBar');
+  const rect = bar.getBoundingClientRect();
+  const pct = (e.clientX-rect.left)/rect.width;
+  audio.currentTime = pct*audio.duration;
+  pushDjState({position:audio.currentTime, anchorTs:Date.now()});
+}
+function startHeartbeat(){
+  stopHeartbeat();
+  // periodically re-broadcast the true position so late-joiners and drift get corrected
+  djHeartbeatTimer = setInterval(()=>{
+    if(!plIsPlaying) return;
+    pushDjState({});
+  }, 4000);
+}
+function stopHeartbeat(){
+  if(djHeartbeatTimer){ clearInterval(djHeartbeatTimer); djHeartbeatTimer=null; }
+}
+
+/* ---- ARTIST: syncs to the shared dj_state ---- */
+async function joinBroadcast(){
+  const audio = document.getElementById('playlistAudio');
+  djJoined = true;
+  document.getElementById('joinBroadcastBtn').textContent = '✅ Synced In';
+  document.getElementById('joinBroadcastBtn').disabled = true;
+  // user-gesture unlock: play a track (even silently) so future programmatic play() calls are allowed
+  const state = await sget('dj_state');
+  if(state && state.trackId){
+    const track = PLAYLIST.find(t=>t.id===state.trackId);
+    if(track){
+      audio.src = track.url;
+      const expected = state.isPlaying ? state.position + (Date.now()-state.anchorTs)/1000 : state.position;
+      audio.currentTime = Math.max(0, expected);
+      if(state.isPlaying){ await audio.play().catch(()=>{}); }
+    }
+  } else {
+    // nothing live yet — do a quick muted unlock so playback isn't blocked later
+    audio.muted = true;
+    audio.play().then(()=>{ audio.pause(); audio.muted=false; }).catch(()=>{ audio.muted=false; });
+  }
+  updateNowPlayingLabel();
+}
+function startDjSyncLoop(){
+  djSyncTimer = setInterval(async ()=>{
+    const state = await sget('dj_state');
+    if(!state){ return; }
+    const changedTrack = (plCurrentIdx===-1 && state.trackId) || (plCurrentIdx>-1 && PLAYLIST[plCurrentIdx] && PLAYLIST[plCurrentIdx].id !== state.trackId);
+    if(!state.trackId){
+      if(plCurrentIdx!==-1){ plCurrentIdx=-1; plIsPlaying=false; renderPlaylistQueue(); }
+      return;
+    }
+    const idx = PLAYLIST.findIndex(t=>t.id===state.trackId);
+    if(idx===-1) return;
+    const audio = document.getElementById('playlistAudio');
+    const expected = state.isPlaying ? state.position + (Date.now()-state.anchorTs)/1000 : state.position;
+
+    if(changedTrack && djJoined){
+      plCurrentIdx = idx;
+      audio.src = PLAYLIST[idx].url;
+      audio.currentTime = Math.max(0, expected);
+      if(state.isPlaying) audio.play().catch(()=>{});
+      plIsPlaying = state.isPlaying;
+      renderPlaylistQueue();
+      return;
+    }
+    plCurrentIdx = idx;
+    if(djJoined){
+      if(state.isPlaying && audio.paused){ audio.play().catch(()=>{}); }
+      if(!state.isPlaying && !audio.paused){ audio.pause(); }
+      if(Math.abs(audio.currentTime - expected) > 1.2){ audio.currentTime = Math.max(0, expected); }
+    }
+    if(plIsPlaying !== state.isPlaying){ plIsPlaying = state.isPlaying; renderPlaylistQueue(); }
+  }, 1500);
 }
 
 /* ===================== DROPS ===================== */
